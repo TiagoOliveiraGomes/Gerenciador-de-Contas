@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import Header from './Header';
 import BankSelector from './BankSelector';
 import AccountsTable from './AccountsTable';
-import { Bank, Account } from './types';
+import { Bank } from './types';
+import ModalCreateBill from './components/ModalCreateBill';
+import ModalAddBank from './components/ModalAddBank';
 
 const App: React.FC = () => {
   // Exemplo de dados iniciais
@@ -97,6 +99,8 @@ const App: React.FC = () => {
   ]);
 
   const [selectedBankId, setSelectedBankId] = useState<number>(1);
+  const [isModalAddBankOpen, setIsModalAddBankOpen] = useState<boolean>(false);
+
 
   // Retorna o banco selecionado (ou null se não encontrar)
   const selectedBank = banks.find((bank) => bank.id === selectedBankId) || null;
@@ -134,6 +138,19 @@ const App: React.FC = () => {
       });
     });
   };
+  const handleAddNewBank = (newBank: { name: string; icon: string }) => {
+    setBanks((prevBanks) => [
+      ...prevBanks,
+      {
+        id: Math.max(...prevBanks.map((b) => b.id)) + 1,
+        name: newBank.name,
+        icon: newBank.icon,
+        accounts: [],
+      }
+    ]);
+    setIsModalAddBankOpen(false);
+  };
+  
 
   // Alterna exibição de parcelas
   const handleToggleInstallments = (accountId: number) => {
@@ -205,6 +222,41 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+
+  const handleAddNewAccount = (newAccount: any) => {
+    setBanks((prevBanks) => {
+      return prevBanks.map((bank) => {
+        if (bank.id !== selectedBankId) return bank;
+  
+        const newId =
+          bank.accounts.length > 0
+            ? Math.max(...bank.accounts.map((acc) => acc.id)) + 1
+            : 1;
+  
+        const accountToAdd = {
+          id: newId,
+          ...newAccount,
+          isConcluded: false,
+          showInstallments: false,
+          installments: newAccount.installments?.map((inst: any, index: number) => ({
+            ...inst,
+            id: index + 1,
+            isConcluded: false,
+          })),
+        };
+  
+        return {
+          ...bank,
+          accounts: [...bank.accounts, accountToAdd],
+        };
+      });
+    });
+  
+    setIsModalOpen(false); // fecha o modal após salvar
+  };
+
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -228,30 +280,63 @@ const App: React.FC = () => {
       )}
 
       {/* Botões de Carregar/Salvar no canto inferior direito (ou onde preferir) */}
-      <div className="p-4 mt-auto flex justify-end items-center space-x-4">
-        <div>
-          <label
-            htmlFor="fileInput"
-            className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Carregar arquivo
-          </label>
-          <input
-            id="fileInput"
-            type="file"
-            accept=".txt"
-            onChange={handleLoadFromFile}
-            className="hidden"
-          />
-        </div>
-        
+      <div className="p-4 mt-auto flex justify-between items-center space-x-4">
+
+        <div className='p-4 mt-auto flex justify-end items-center space-x-4'>
         <button
-          onClick={handleSaveChanges}
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
+          onClick={() => setIsModalAddBankOpen(true)}
         >
-          Salvar mudanças
+          Adicionar Banco +
         </button>
+
+        <button
+            className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
+            onClick={() => setIsModalOpen(true)}
+          >
+            Adicionar conta +
+          </button>
+        </div>
+
+        <div className="p-4 mt-auto flex justify-end items-center space-x-4">
+          <div>
+            <label
+              htmlFor="fileInput"
+              className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Carregar arquivo
+            </label>
+            <input
+              id="fileInput"
+              type="file"
+              accept=".txt"
+              onChange={handleLoadFromFile}
+              className="hidden"
+            />
+          </div>
+          
+          <button
+            onClick={handleSaveChanges}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
+            Salvar mudanças
+          </button>
+        </div>
+
       </div>
+      <ModalCreateBill
+        isOpen={isModalOpen}
+        banks={banks.map((bank) => bank.name)}
+        onCancel={() => setIsModalOpen(false)}
+        onConfirm={handleAddNewAccount}
+      />
+      <ModalAddBank
+        isOpen={isModalAddBankOpen}
+        onCancel={() => setIsModalAddBankOpen(false)}
+        onConfirm={handleAddNewBank}
+      />
+
+
     </div>
   );
 };

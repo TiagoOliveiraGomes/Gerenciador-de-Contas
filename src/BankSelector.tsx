@@ -1,5 +1,6 @@
 import React from 'react';
-import { Bank } from './types'; // Ajuste o caminho conforme seu projeto
+import { Bank }  from './types'; // Ajuste o caminho conforme seu projeto
+import { Bank as BankIcon } from '@phosphor-icons/react';
 
 interface BankSelectorProps {
   banks: Bank[];
@@ -30,7 +31,8 @@ const BankSelector: React.FC<BankSelectorProps> = ({
                 - Ou algum componente de ícone de biblioteca.
             */}
             <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mb-2">
-              <span>{bank.icon}</span> 
+              {/* <span>{bank.icon}</span>  */}
+              <span><BankIcon size={32} /></span>
             </div>
             <span>{bank.name}</span>
           </button>
