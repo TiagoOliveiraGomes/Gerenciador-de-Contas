@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import Header from './Header';
 import BankSelector from './BankSelector';
 import AccountsTable from './AccountsTable';
-import { Bank } from './types';
+import { Bank, Installment, NewAccount } from './types';
 import ModalCreateBill from './components/ModalCreateBill';
 import ModalAddBank from './components/ModalAddBank';
+import Modal from './components/ModalBase';
 
 const App: React.FC = () => {
   // Exemplo de dados iniciais
@@ -12,7 +13,7 @@ const App: React.FC = () => {
     {
       id: 1,
       name: 'Inter',
-      icon: 'I', // substitua por um ícone de sua preferência
+      // icon: 'I', // substitua por um ícone de sua preferência
       accounts: [
         {
           id: 101,
@@ -49,7 +50,7 @@ const App: React.FC = () => {
     {
       id: 2,
       name: 'Nubank',
-      icon: 'N',
+      // icon: 'N',
       accounts: [
         {
           id: 201,
@@ -64,7 +65,7 @@ const App: React.FC = () => {
     {
       id: 3,
       name: 'C6 Bank',
-      icon: 'C6',
+      // icon: 'C6',
       accounts: [
         {
           id: 301,
@@ -138,13 +139,12 @@ const App: React.FC = () => {
       });
     });
   };
-  const handleAddNewBank = (newBank: { name: string; icon: string }) => {
+  const handleAddNewBank = (newBank: { name: string;}) => {
     setBanks((prevBanks) => [
       ...prevBanks,
       {
         id: Math.max(...prevBanks.map((b) => b.id)) + 1,
         name: newBank.name,
-        icon: newBank.icon,
         accounts: [],
       }
     ]);
@@ -221,13 +221,26 @@ const App: React.FC = () => {
     link.click();
     URL.revokeObjectURL(url);
   };
+  const handleDeleteBank = (bankId: number) => {
+    setBanks((prevBanks) => prevBanks.filter((bank) => bank.id !== bankId));
+  
+    // se o banco deletado for o selecionado, seleciona o primeiro disponível (ou nenhum)
+    if (bankId === selectedBankId) {
+      const updatedBanks = banks.filter((bank) => bank.id !== bankId);
+      setSelectedBankId(updatedBanks[0]?.id || 0);
+    }
+  };
+  
 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+  const [isBillModalOpen, setIsBillModalOpen] = useState<boolean>(false)
+  const [isDeleteBankModalOpen, setIsDeleteBankModalOpen] = useState<boolean>(false)
+  const [bankIdToDelete, setBankIdToDelete] = useState<number | null>(null);
 
-  const handleAddNewAccount = (newAccount: any) => {
+
+  const handleAddNewAccount = (newAccount: NewAccount) => {
     setBanks((prevBanks) => {
       return prevBanks.map((bank) => {
-        if (bank.id !== selectedBankId) return bank;
+        if (bank.name !== newAccount.bank) return bank;
   
         const newId =
           bank.accounts.length > 0
@@ -239,7 +252,7 @@ const App: React.FC = () => {
           ...newAccount,
           isConcluded: false,
           showInstallments: false,
-          installments: newAccount.installments?.map((inst: any, index: number) => ({
+          installments: newAccount.installments?.map((inst: Installment, index: number) => ({
             ...inst,
             id: index + 1,
             isConcluded: false,
@@ -253,8 +266,12 @@ const App: React.FC = () => {
       });
     });
   
-    setIsModalOpen(false); // fecha o modal após salvar
+    setIsBillModalOpen(false); // fecha o modal após salvar
   };
+
+  const bankToDelete = bankIdToDelete !== null 
+  ? banks.find(bank => bank.id === bankIdToDelete) 
+  : null;
 
 
   return (
@@ -267,7 +284,12 @@ const App: React.FC = () => {
         banks={banks}
         selectedBankId={selectedBankId}
         onSelectBank={handleSelectBank}
+        onDeleteBank={(id) => {
+          setBankIdToDelete(id)
+          setIsDeleteBankModalOpen(true)
+        }}
       />
+
 
       {/* Tabela de Contas */}
       {selectedBank && (
@@ -292,7 +314,7 @@ const App: React.FC = () => {
 
         <button
             className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsBillModalOpen(true)}
           >
             Adicionar conta +
           </button>
@@ -325,15 +347,30 @@ const App: React.FC = () => {
 
       </div>
       <ModalCreateBill
-        isOpen={isModalOpen}
+        isOpen={isBillModalOpen}
         banks={banks.map((bank) => bank.name)}
-        onCancel={() => setIsModalOpen(false)}
+        onCancel={() => setIsBillModalOpen(false)}
         onConfirm={handleAddNewAccount}
       />
       <ModalAddBank
         isOpen={isModalAddBankOpen}
         onCancel={() => setIsModalAddBankOpen(false)}
         onConfirm={handleAddNewBank}
+      />
+      <Modal 
+        isOpen={isDeleteBankModalOpen}
+        message={`Deseja deletar o banco: ${bankToDelete ? bankToDelete.name : ''}`}
+        onCancel={()=> {
+          setIsDeleteBankModalOpen(false)
+          setBankIdToDelete(null)
+        }}
+        onConfirm={() => {
+          if(bankIdToDelete !== null){
+            handleDeleteBank(bankIdToDelete)
+            setIsDeleteBankModalOpen(false)
+            setBankIdToDelete(null)
+          }
+        }}
       />
 
 

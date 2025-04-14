@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { NewAccount } from '../types';
 
 interface ModalCreateBillProps {
   isOpen: boolean;
   banks: string[];
   onCancel: () => void;
-  onConfirm: (newAccount: any) => void;
+  onConfirm: (newAccount: NewAccount) => void;
 }
 
 const ModalCreateBill: React.FC<ModalCreateBillProps> = ({

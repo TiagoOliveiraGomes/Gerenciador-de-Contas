@@ -23,7 +23,24 @@ export interface Installment {
   export interface Bank {
     id: number;
     name: string;
-    icon: string; // caminho do ícone ou nome do ícone do react-icons
+    // icon: string; // caminho do ícone ou nome do ícone do react-icons
     accounts: Account[];
   }
   
+  export interface Installment {
+    id: number;
+    value: number;
+    date: string;
+    isConcluded: boolean;
+  }
+  
+  export interface NewAccount {
+    bank: string; // se quiser pode mudar para 'bankId: number' mais tarde
+    isInstallment: boolean;
+    value: number;
+    date: string;
+    description: string;
+    isConcluded: boolean;
+    showInstallments: boolean;
+    installments: Installment[];
+  }

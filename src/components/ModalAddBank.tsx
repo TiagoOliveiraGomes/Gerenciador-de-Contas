@@ -7,7 +7,7 @@ interface ModalAddBankProps {
 }
 
 const ModalAddBank: React.FC<ModalAddBankProps> = ({ isOpen, onCancel, onConfirm }) => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState<string>('');
 
   const handleConfirm = () => {
     if (name.trim()) {
