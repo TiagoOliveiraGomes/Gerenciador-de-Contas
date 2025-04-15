@@ -37,7 +37,7 @@ const BankSelector: React.FC<BankSelectorProps> = ({
             <button
               onClick={() => onSelectBank(bank.id)}
               className={`flex flex-col items-center justify-center cursor-pointer 
-                ${isSelected ? 'text-blak font-semibold' : 'text-gray-700'}
+                ${isSelected ? 'text-blak font-semibold scale-110' : 'text-gray-700'}
                 transition-colors duration-200 hover:text-blue-900 min-w-[80px]
                 hover:scale-110
               `}
