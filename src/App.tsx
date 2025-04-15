@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from './Header';
 import BankSelector from './BankSelector';
 import AccountsTable from './AccountsTable';
-import { Bank, Installment, NewAccount } from './types';
+import { Bank, NewAccount } from './types';
 import ModalCreateBill from './components/ModalCreateBill';
 import ModalAddBank from './components/ModalAddBank';
 import Modal from './components/ModalBase';
@@ -47,59 +47,18 @@ const App: React.FC = () => {
         },
       ]
     },
-    {
-      id: 2,
-      name: 'Nubank',
-      // icon: 'N',
-      accounts: [
-        {
-          id: 201,
-          date: '2025-05-20',
-          value: 200,
-          description: 'Compra de roupas',
-          isConcluded: false,
-          showInstallments: false,
-        }
-      ]
-    },
-    {
-      id: 3,
-      name: 'C6 Bank',
-      // icon: 'C6',
-      accounts: [
-        {
-          id: 301,
-          date: '2025-06-01',
-          value: 999,
-          description: 'Compra parcelada',
-          isConcluded: false,
-          showInstallments: false,
-          installments: [
-            {
-              id: 1,
-              date: '2025-06-01',
-              value: 333,
-              isConcluded: false
-            },
-            {
-              id: 2,
-              date: '2025-07-01',
-              value: 333,
-              isConcluded: false
-            },
-            {
-              id: 3,
-              date: '2025-08-01',
-              value: 333,
-              isConcluded: false
-            }
-          ]
-        }
-      ]
-    }
   ]);
 
-  const [selectedBankId, setSelectedBankId] = useState<number>(1);
+  // Inicializa com o id do primeiro banco se existir, ou 0 (ou outro valor padrão)
+  const [selectedBankId, setSelectedBankId] = useState<number>(banks.length > 0 ? banks[0].id : 0);
+
+  useEffect(() => {
+    if (banks.length > 0 && !banks.find(b => b.id === selectedBankId)) {
+      setSelectedBankId(banks[0].id);
+    }
+  }, [banks, selectedBankId]);
+  
+
   const [isModalAddBankOpen, setIsModalAddBankOpen] = useState<boolean>(false);
 
 
@@ -143,7 +102,7 @@ const App: React.FC = () => {
     setBanks((prevBanks) => [
       ...prevBanks,
       {
-        id: Math.max(...prevBanks.map((b) => b.id)) + 1,
+        id: prevBanks.length > 0 ? Math.max(...prevBanks.map((b) => b.id)) + 1 : 1,
         name: newBank.name,
         accounts: [],
       }
@@ -237,37 +196,34 @@ const App: React.FC = () => {
   const [bankIdToDelete, setBankIdToDelete] = useState<number | null>(null);
 
 
-  const handleAddNewAccount = (newAccount: NewAccount) => {
+  const handleAddNewAccount = (newAccount: NewAccount & { bankId: number }) => {
     setBanks((prevBanks) => {
       return prevBanks.map((bank) => {
-        if (bank.name !== newAccount.bank) return bank;
-  
+        if (bank.id !== newAccount.bankId) return bank;
+    
         const newId =
           bank.accounts.length > 0
             ? Math.max(...bank.accounts.map((acc) => acc.id)) + 1
             : 1;
-  
+    
         const accountToAdd = {
           id: newId,
           ...newAccount,
           isConcluded: false,
           showInstallments: false,
-          installments: newAccount.installments?.map((inst: Installment, index: number) => ({
+          installments: newAccount.installments?.map((inst, index: number) => ({
             ...inst,
             id: index + 1,
             isConcluded: false,
           })),
         };
-  
-        return {
-          ...bank,
-          accounts: [...bank.accounts, accountToAdd],
-        };
+    
+        return { ...bank, accounts: [...bank.accounts, accountToAdd] };
       });
     });
-  
-    setIsBillModalOpen(false); // fecha o modal após salvar
+    setIsBillModalOpen(false);
   };
+  
 
   const bankToDelete = bankIdToDelete !== null 
   ? banks.find(bank => bank.id === bankIdToDelete) 
@@ -313,7 +269,8 @@ const App: React.FC = () => {
         </button>
 
         <button
-            className="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
+            disabled={banks.length === 0}
+            className={`  px-4 py-2 rounded ${banks.length?'bg-gray-700 hover:bg-gray-800 text-white' : 'text-gray-500 bg-gray-600'}`}
             onClick={() => setIsBillModalOpen(true)}
           >
             Adicionar conta +
@@ -348,10 +305,11 @@ const App: React.FC = () => {
       </div>
       <ModalCreateBill
         isOpen={isBillModalOpen}
-        banks={banks.map((bank) => bank.name)}
+        banks={banks.map((b) => ({ id: b.id, name: b.name }))} // mapeando para o formato esperado
         onCancel={() => setIsBillModalOpen(false)}
         onConfirm={handleAddNewAccount}
       />
+
       <ModalAddBank
         isOpen={isModalAddBankOpen}
         onCancel={() => setIsModalAddBankOpen(false)}

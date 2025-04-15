@@ -3,9 +3,9 @@ import { NewAccount } from '../types';
 
 interface ModalCreateBillProps {
   isOpen: boolean;
-  banks: string[];
+  banks: { id: number; name: string }[];
   onCancel: () => void;
-  onConfirm: (newAccount: NewAccount) => void;
+  onConfirm: (newAccount: NewAccount & { bankId: number }) => void;
 }
 
 const ModalCreateBill: React.FC<ModalCreateBillProps> = ({
@@ -14,7 +14,7 @@ const ModalCreateBill: React.FC<ModalCreateBillProps> = ({
   onCancel,
   onConfirm,
 }) => {
-  const [selectedBank, setSelectedBank] = useState('');
+  const [selectedBankId, setSelectedBankId] = useState<number | null>(null);
   const [isInstallment, setIsInstallment] = useState(false);
   const [numInstallments, setNumInstallments] = useState(2);
   const [value, setValue] = useState('');
@@ -27,13 +27,29 @@ const ModalCreateBill: React.FC<ModalCreateBillProps> = ({
     setInstallmentValues(Array(numInstallments).fill(''));
     setInstallmentDates(Array(numInstallments).fill(''));
   }, [numInstallments]);
+  
+  useEffect(() => {
+    if (isOpen && banks.length > 0) {
+      setSelectedBankId(banks[0].id);
+    }
+  }, [isOpen, banks]);
 
   const handleConfirm = () => {
+    if (selectedBankId === null) {
+      console.log("id do banco selecionado é nulo")
+      // Opcional: exibir um aviso ou retornar
+      return;
+    }
+    
     const parsedInstallmentValues = installmentValues.map((v) => parseFloat(v) || 0);
     const totalInstallmentValue = parsedInstallmentValues.reduce((acc, curr) => acc + curr, 0);
   
+    // Se você não tiver acesso direto ao nome, pode passar o nome do banco buscado no array.
+    const selectedBankObject = banks.find(bank => bank.id === selectedBankId);
+  
     const newAccount = {
-      bank: selectedBank,
+      bank: selectedBankObject ? selectedBankObject.name : '', // propriedade exigida em NewAccount
+      bankId: selectedBankId, // propriedade adicional
       isInstallment,
       value: isInstallment ? totalInstallmentValue : parseFloat(value),
       date: isInstallment ? installmentDates[0] : date,
@@ -52,6 +68,7 @@ const ModalCreateBill: React.FC<ModalCreateBillProps> = ({
   
     onConfirm(newAccount);
   };
+  
 
   if (!isOpen) return null;
 
@@ -64,17 +81,18 @@ const ModalCreateBill: React.FC<ModalCreateBillProps> = ({
           Banco:
           <select
             className="block w-full mt-1 p-2 border rounded"
-            value={selectedBank}
-            onChange={(e) => setSelectedBank(e.target.value)}
+            value={selectedBankId ?? 1}
+            onChange={(e) => setSelectedBankId(Number(e.target.value))}
+            
           >
-            <option value="">Selecione um banco</option>
-            {banks.map((bankName) => (
-              <option key={bankName} value={bankName}>
-                {bankName}
+            {banks.map((bank) => (
+              <option key={bank.id} value={bank.id}>
+                {bank.name}
               </option>
             ))}
           </select>
         </label>
+
 
         <label className="block mb-2">
           Tipo de pagamento:
