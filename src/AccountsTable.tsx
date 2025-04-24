@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bank, Installment } from './types';
-import { CaretDown, CaretUp, CheckCircle, Trash } from '@phosphor-icons/react';
+import { CaretDown, CaretUp, CheckCircle, Trash, XCircle } from '@phosphor-icons/react';
 import Modal from './components/ModalBase';
 
 interface AccountsTableProps {
@@ -60,9 +60,12 @@ const AccountsTable: React.FC<AccountsTableProps> = ({
           </tr>
         </thead>
         <tbody>
-          {bank.accounts.map((account) => {
+          {bank.accounts
+           .slice() // para não modificar o array original
+           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+           .map((account) => {
             // Se a conta estiver concluída, deixamos um estilo semi-transparente
-            const rowStyle = account.isConcluded ? 'opacity-50' : '';
+            const rowStyle = account.isConcluded ? 'line-through decoration-red-500' : '';
             const isExpanded = expandedAccounts.includes(account.id);
 
             return (
@@ -85,7 +88,7 @@ const AccountsTable: React.FC<AccountsTableProps> = ({
                       onClick={() => onToggleConclusion(account.id)}
                       title="Marcar como concluída"
                     >
-                      <CheckCircle size={22} />
+                      {account.isConcluded? <XCircle className='text-green-300' size={22} />:<CheckCircle size={22} />}
                     </button>
 
                     {/* Botão de apagar a conta */}
